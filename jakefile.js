@@ -23,7 +23,8 @@
 
   desc("Test everything");
   task("test", ["lint"], function () {
-    console.log("Every test is here");
+    var nodeunit = require("nodeunit").reporters["default"];
+    nodeunit.run(['test/server/']);
   });
 
   desc("Integration");
