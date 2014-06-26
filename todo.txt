@@ -14,7 +14,12 @@ User Story:
 - marketing copy
 
 Engineering Task:
-- continuous integration
 - server-side testing
 - client-side testing
+
+To Do on current task:
+- Select a test framework
+- Abstract it
+- Swap
+
 

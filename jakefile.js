@@ -3,7 +3,7 @@
   "use strict";
 
   desc("default");
-  task("default", ["lint"]);
+  task("default", ["lint", "test"]);
 
   desc("Lint everything");
   task("lint", [], function () {
@@ -18,6 +18,12 @@
     var result = lint.validateFileList(files.toArray(), options, {});
     if(!result) jake.fail("Lint Failed");
 
+  });
+
+
+  desc("Test everything");
+  task("test", ["lint"], function () {
+    console.log("Every test is here");
   });
 
   desc("Integration");
