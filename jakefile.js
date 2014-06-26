@@ -26,8 +26,9 @@
   desc("Test everything");
   task("test", [], function () {
     var nodeunit = require("nodeunit").reporters["default"];
-    nodeunit.run(['test/server/'], null, function(error){
-      console.log("test done");
+    nodeunit.run(['test/server/'], null, function(failures){
+      if(failures) fail("Test failed");
+
       complete();
     });
 
