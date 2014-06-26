@@ -1,1 +1,6 @@
-console.log("Server JS");
+"use strict";
+
+exports.num = function(){
+  return 3;
+};
+

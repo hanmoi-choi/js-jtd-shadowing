@@ -1,6 +1,8 @@
-/*global desc, task, jake, lintOptions*/
+/*global desc, task, jake, lintOptions, fail, complete*/
+
 (function(){
   "use strict";
+  var jake = require('jake');
 
   desc("default");
   task("default", ["lint", "test"]);
@@ -16,19 +18,23 @@
     var options = lintOptions();
 
     var result = lint.validateFileList(files.toArray(), options, {});
-    if(!result) jake.fail("Lint Failed");
+    if(!result) fail("Lint Failed");
 
   });
 
 
   desc("Test everything");
-  task("test", ["lint"], function () {
+  task("test", [], function () {
     var nodeunit = require("nodeunit").reporters["default"];
-    nodeunit.run(['test/server/']);
-  });
+    nodeunit.run(['test/server/'], null, function(error){
+      console.log("test done");
+      complete();
+    });
 
-  desc("Integration");
-  task("Integration", ["default"], function(){
+  }, {async: true});
+
+  desc("integration");
+  task("integration", ["default"], function(){
     console.log("Integration logic here");
 
     console.log("1. Make sure 'git status' is clean");
