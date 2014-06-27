@@ -1,106 +1,112 @@
-(function(){
+// Copyright (c) 2012 Titanium I.T. LLC. All rights reserved. See LICENSE.txt for details.
+(function() {
+	"use strict";
 
-  "use strict";
+	var server = require("./server.js");
+	var http = require("http");
+	var fs = require("fs");
+	var assert = require("assert");
 
-  var server = require("./server.js");
-  var http = require("http");
-  var fs = require("fs");
-  var assert = require("assert");
+	var TEST_HOME_PAGE = "generated/test/testHome.html";
+	var TEST_404_PAGE = "generated/test/test404.html";
 
-  var TEST_PAGE = "generated/test/test.html";
-  var TEST_404_PAGE = "generated/test/404test.html";
+	exports.tearDown = function(done) {
+		cleanUpFile(TEST_HOME_PAGE);
+		cleanUpFile(TEST_404_PAGE);
+		done();
+	};
 
-  exports.tearDown = function (done) {
-    function cleanUp(file) {
-      if (fs.existsSync(file)) {
-        fs.unlinkSync(file);
-        assert.ok(!fs.existsSync(file), "Tmp test page shall be deleted!");
-      }
-    }
+	exports.test_servesHomePageFromFile = function(test) {
+		var expectedData = "This is home page file";
+		fs.writeFileSync(TEST_HOME_PAGE, expectedData);
 
-    [TEST_PAGE, TEST_404_PAGE].map(cleanUp);
+		httpGet("http://localhost:8080", function(response, responseData) {
+			test.equals(200, response.statusCode, "status code");
+			test.equals(expectedData, responseData, "response text");
+			test.done();
+		});
+	};
 
-    done();
-  };
+	exports.test_returns404FromFileForEverythingExceptHomePage = function(test) {
+		var expectedData = "This is 404 page file";
+		fs.writeFileSync(TEST_404_PAGE, expectedData);
 
-  function httpGet(url, callback) {
-    server.start(TEST_PAGE, TEST_404_PAGE, 8080);
+		httpGet("http://localhost:8080/bargle", function(response, responseData) {
+			test.equals(404, response.statusCode, "status code");
+			test.equals(expectedData, responseData, "404 text");
+			test.done();
+		});
+	};
 
-    var request = http.get(url);
+	exports.test_returnsHomePageWhenAskedForIndex = function(test) {
+		var testDir = "generated/test";
+		fs.writeFileSync(TEST_HOME_PAGE, "foo");
 
-    request.on("response", function (response) {
-      var receivedData = "";
-      response.setEncoding("utf8");
+		httpGet("http://localhost:8080/index.html", function(response, responseData) {
+			test.equals(200, response.statusCode, "status code");
+			test.done();
+		});
+	};
 
-      response.on("data", function (chunk) {
-        receivedData += chunk;
-      });
+	exports.test_requiresHomePageParameter = function(test) {
+		test.throws(function() {
+			server.start();
+		});
+		test.done();
+	};
 
-      response.on("end", function () {
-        server.stop(function () {
-          callback(response, receivedData);
-        });
-      });
-    });
-  }
+	exports.test_requires404PageParameter = function(test) {
+		test.throws(function() {
+			server.start(TEST_HOME_PAGE);
+		});
+		test.done();
+	};
 
-// Integration Test
-  exports.test_returnHomepage = function (test) {
-    var testData = "This is a test data";
-    fs.writeFileSync(TEST_PAGE, testData);
+	exports.test_requiresPortParameter = function(test) {
+		test.throws(function() {
+			server.start(TEST_HOME_PAGE, TEST_404_PAGE);
+		});
+		test.done();
+	};
 
-    httpGet("http://localhost:8080", function (response, receivedData) {
-      test.equals(200, response.statusCode, "status code");
-      test.equals(testData, receivedData, "response text");
-      test.done();
-    });
-  };
+	exports.test_runsCallbackWhenStopCompletes = function(test) {
+		server.start(TEST_HOME_PAGE, TEST_404_PAGE, 8080);
+		server.stop(function() {
+			test.done();
+		});
+	};
 
-  exports.test_return404ExceptForHomepage = function (test) {
-    var expected404Data = "404 Error";
-    fs.writeFileSync(TEST_404_PAGE, expected404Data);
+	exports.test_stopThrowsExceptionWhenNotRunning = function(test) {
+		test.throws(function() {
+			server.stop();
+		});
+		test.done();
+	};
 
-    httpGet("http://localhost:8080/dummy", function (response, receivedData) {
-      test.equals(404, response.statusCode, "status code");
-      test.equals(expected404Data, receivedData, "404 response text");
+	function httpGet(url, callback) {
+		server.start(TEST_HOME_PAGE, TEST_404_PAGE, 8080, function() {
+			var request = http.get(url);
+			request.on("response", function(response) {
+				var receivedData = "";
+				response.setEncoding("utf8");
 
-      test.done();
-    });
-  };
+				response.on("data", function(chunk) {
+					receivedData += chunk;
+				});
+				response.on("end", function() {
+					server.stop(function() {
+						callback(response, receivedData);
+					});
+				});
+			});
+		});
+	}
 
-  exports.test_returnHomepageWhenRequestedIndex = function (test) {
-    var testData = "This is a test data";
+	function cleanUpFile(file) {
+		if (fs.existsSync(file)) {
+			fs.unlinkSync(file);
+			assert.ok(!fs.existsSync(file), "could not delete test file: [" + file + "]");
+		}
+	}
 
-    fs.writeFileSync(TEST_PAGE, testData);
-
-    httpGet("http://localhost:8080/index.html", function (response, receivedData) {
-      test.equals(200, response.statusCode, "status code");
-      test.equals(testData, receivedData, "response text");
-      test.done();
-    });
-  };
-
-  exports.test_requiresPortNumber = function (test) {
-    test.throws(function () {
-      server.start();
-    });
-
-    test.done();
-  };
-
-  exports.test_runCallbackWhenServerStopCompletes = function (test) {
-    server.start(TEST_PAGE, TEST_404_PAGE, 8080); //TODO: weird
-
-    server.stop(function () {
-      test.done();
-    });
-  };
-
-  exports.test_stopCalledWhenServerIsNotRunningThrowException = function (test) {
-    test.throws(function () {
-      server.stop();
-    });
-    test.done();
-  };
-})();
-
+}());

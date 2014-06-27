@@ -1,23 +1,27 @@
 WeeWikiPaint
 
-MinimumMarketableFeature:
-* Marketing HomePage
-- Collaborative feature
+Minimum Marketable Features:
+* marketing home page
+- collaborative painting page (very basic)
 - wiki-fy the pages
-- more complex painting
-- more collaborative features
+- more complex painting?
+- more collaborative features?
 
-User Story:
-* Server one-file Homepage
-- Server 404 error for everything else
-- Marketing Copy
-- Publish to Internet
+User Stories:
+> Marketing copy
+* Publish to Internet
 
-Engineering Task:
+Engineering Tasks:
 
 To Do on current task:
-- Select a test framework
-- Abstract it
-- Swap
 
+Future ideas:
+- Create 'fail fast' assertion code
+- Abstract test framework? (Swap out a different framework to make sure abstraction works)
+- Static checking of function parameters (rather than writing tests)
+- Handle errors properly in server.js
+- server.stop() waits for open connections to close (e.g., Firefox keeps open connection).
+  Make it forcibly close?
 
+Notes:
+- NodeUnit default reporter has minor display issue on Windows
