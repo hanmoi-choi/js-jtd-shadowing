@@ -1,0 +1,9 @@
+{
+  "name": "weewikipaint",
+  "version": "0.0.1",
+
+  "engines": {
+    "node": "v0.10.28",
+    "npm": "1.4.15"
+  }
+}
