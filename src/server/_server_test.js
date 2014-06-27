@@ -1,61 +1,93 @@
-"use strict";
+(function(){
 
-var server = require("./server.js");
-var http = require("http");
-var fs = require("fs");
+  "use strict";
 
-// Integration Test
-exports.test_serverServersFile = function (test) {
-  var testDir = "generated/test/";
-  var testFile = testDir + "test.html";
+  var server = require("./server.js");
+  var http = require("http");
+  var fs = require("fs");
+  var assert = require("assert");
 
-  var testData = "This is a test data";
+  var testFile = "generated/test/test.html";
 
-  fs.writeFileSync(testFile, testData);
-  server.start(8080);
-  var request = http.get("http://localhost:8080");
+  exports.tearDown = function (done) {
+    if (fs.existsSync(testFile)) {
+      fs.unlinkSync(testFile);
+      assert.ok(!fs.existsSync(testFile), "Tmp test file shall be deleted!");
+    }
 
-  request.on("response", function (response) {
-    var receivedData = false;
-    response.setEncoding("utf8");
+    done();
+  };
 
-    test.equals(200, response.statusCode, "status code");
-    response.on("data", function (chunk) {
-      receivedData = true;
-      test.equals(testData, chunk, "response text");
-    });
+  function httpGet(url, callback) {
+    var request = http.get(url);
 
-    response.on("end", function () {
-      test.ok(receivedData, "should have received response data");
-      server.stop(function () {
-        fs.unlinkSync(testFile);
-        test.ok(!fs.existsSync(testFile), "Tmp test file shall be deleted!");
-        test.done();
+    request.on("response", function (response) {
+      var receivedData = "";
+      response.setEncoding("utf8");
+
+      response.on("data", function (chunk) {
+        receivedData += chunk;
+      });
+
+      response.on("end", function () {
+        server.stop(function () {
+          callback(response, receivedData);
+
+        });
+
       });
     });
-  });
+  }
 
-};
 
-exports.test_serverRequiresPortNumber = function (test) {
-  test.throws(function () {
-    server.start();
-  });
+// Integration Test
+  exports.test_serverServersFile = function (test) {
+    var testData = "This is a test data";
 
-  test.done();
-};
+    fs.writeFileSync(testFile, testData);
+    server.start(testFile, 8080);
 
-exports.test_serverRunCallbackWhenServerStopCompletes = function (test) {
-  server.start(8080); //TODO: weird
+    httpGet("http://localhost:8080", function (response, receivedData) {
+      test.equals(200, response.statusCode, "status code");
+      test.equals(testData, receivedData, "response text");
+      test.done();
+    });
+  };
 
-  server.stop(function () {
+  exports.test_serverReturn404ExceptForHomepage = function (test) {
+    var testData = "This is a test data";
+
+    fs.writeFileSync(testFile, testData);
+    server.start(testFile, 8080);
+
+    httpGet("http://localhost:8080/dummy", function (response, receivedData) {
+      test.equals(404, response.statusCode, "status code");
+      test.done();
+    });
+
+  };
+
+  exports.test_serverRequiresPortNumber = function (test) {
+    test.throws(function () {
+      server.start();
+    });
+
     test.done();
-  });
-};
+  };
 
-exports.test_stopCalledWhenServerIsNotRunningThrowException = function (test) {
-  test.throws(function () {
-    server.stop();
-  });
-  test.done();
-};
+  exports.test_serverRunCallbackWhenServerStopCompletes = function (test) {
+    server.start(testFile, 8080); //TODO: weird
+
+    server.stop(function () {
+      test.done();
+    });
+  };
+
+  exports.test_stopCalledWhenServerIsNotRunningThrowException = function (test) {
+    test.throws(function () {
+      server.stop();
+    });
+    test.done();
+  };
+})();
+
