@@ -64,7 +64,19 @@
       test.equals(404, response.statusCode, "status code");
       test.done();
     });
+  };
 
+  exports.test_serverReturnHomepageWhenRequestedIndex = function (test) {
+    var testData = "This is a test data";
+
+    fs.writeFileSync(testFile, testData);
+    server.start(testFile, 8080);
+
+    httpGet("http://localhost:8080/index.html", function (response, receivedData) {
+      test.equals(200, response.statusCode, "status code");
+      test.equals(testData, receivedData, "response text");
+      test.done();
+    });
   };
 
   exports.test_serverRequiresPortNumber = function (test) {
