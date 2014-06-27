@@ -2,9 +2,16 @@
 
 var server = require("./server.js");
 var http = require("http");
+var fs = require("fs");
 
-//TODO: handle case where stop() is called before start()
-exports.test_serverReturnsHelloWorld = function (test) {
+// Integration Test
+exports.test_serverServersFile = function (test) {
+  var testDir = "generated/test/";
+  var testFile = testDir + "test.html";
+
+  var testData = "This is a test data";
+
+  fs.writeFileSync(testFile, testData);
   server.start(8080);
   var request = http.get("http://localhost:8080");
 
@@ -15,16 +22,27 @@ exports.test_serverReturnsHelloWorld = function (test) {
     test.equals(200, response.statusCode, "status code");
     response.on("data", function (chunk) {
       receivedData = true;
-      test.equals("Hello World", chunk, "response text");
+      test.equals(testData, chunk, "response text");
     });
 
     response.on("end", function () {
       test.ok(receivedData, "should have received response data");
       server.stop(function () {
+        fs.unlinkSync(testFile);
+        test.ok(!fs.existsSync(testFile), "Tmp test file shall be deleted!");
         test.done();
       });
     });
   });
+
+};
+
+exports.test_serverRequiresPortNumber = function (test) {
+  test.throws(function () {
+    server.start();
+  });
+
+  test.done();
 };
 
 exports.test_serverRunCallbackWhenServerStopCompletes = function (test) {

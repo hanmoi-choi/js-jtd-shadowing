@@ -8,14 +8,12 @@ MinimumMarketableFeature:
 - more collaborative features
 
 User Story:
-- "hello world" server
-- "hello world" client
-- support multiple browsers
-- marketing copy
+* Server one-file Homepage
+- Server 404 error for everything else
+- Marketing Copy
+- Publish to Internet
 
 Engineering Task:
-- server-side testing
-- client-side testing
 
 To Do on current task:
 - Select a test framework
